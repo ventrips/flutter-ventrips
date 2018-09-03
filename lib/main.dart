@@ -4,8 +4,45 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 
 import './views/video_cell.dart';
+
+const String APP_ID = 'ca-app-pub-4642980268605791~9598994286';
+const String AD_UNIT_ID = 'ca-app-pub-4642980268605791/8164339717';
+
+MobileAdTargetingInfo targetingInfo = new MobileAdTargetingInfo(
+  keywords: <String>['flutterio', 'beautiful apps'],
+  contentUrl: 'https://flutter.io',
+  birthday: new DateTime.now(),
+  childDirected: false,
+  designedForFamilies: false,
+  // gender: MobileAdGender.male, // or MobileAdGender.female, MobileAdGender.unknown
+  testDevices: <String>[], // Android emulators are considered test devices
+);
+
+BannerAd myBanner = new BannerAd(
+  // Replace the testAdUnitId with an ad unit id from the AdMob dash.
+  // https://developers.google.com/admob/android/test-ads
+  // https://developers.google.com/admob/ios/test-ads
+  adUnitId: AD_UNIT_ID,
+  size: AdSize.banner,
+  targetingInfo: targetingInfo,
+  listener: (MobileAdEvent event) {
+    print("BannerAd event is $event");
+  },
+);
+
+InterstitialAd myInterstitial = new InterstitialAd(
+  // Replace the testAdUnitId with an ad unit id from the AdMob dash.
+  // https://developers.google.com/admob/android/test-ads
+  // https://developers.google.com/admob/ios/test-ads
+  adUnitId: InterstitialAd.testAdUnitId,
+  targetingInfo: targetingInfo,
+  listener: (MobileAdEvent event) {
+    print("InterstitialAd event is $event");
+  },
+);
 
 void main() => runApp(new VentripsApp());
 
@@ -13,12 +50,27 @@ class VentripsApp extends StatefulWidget {
   @override
     State<StatefulWidget> createState() {
       return new VentripsState();
-    } 
+    }
 }
 class VentripsState extends State<VentripsApp> {
+ 
   var refreshKey = GlobalKey<RefreshIndicatorState>();
   List videos = [];
 
+  @override
+  void initState() {
+    super.initState();
+    FirebaseAdMob.instance.initialize(appId: APP_ID);
+    // refreshList();
+  }
+
+  @override
+  void dispose() {
+    myBanner?.dispose();
+    super.dispose();
+  }
+
+  @override
   Future refreshList() async {
     var url = 'https://api.letsbuildthatapp.com/youtube/home_feed';
     http.Response response = await http.get(
@@ -41,12 +93,6 @@ class VentripsState extends State<VentripsApp> {
     print("Scan Bar Code");
   }
 
-  @override
-  void initState() {
-    super.initState();
-    refreshList();
-  }
-
   Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
     return ListTile(
       title: Row(
@@ -64,6 +110,16 @@ class VentripsState extends State<VentripsApp> {
 
   @override
     Widget build (BuildContext context) {
+      myBanner
+        // typically this happens well before the ad is shown
+        ..load()
+        ..show(
+          // Positions the banner ad 0 pixels from the bottom of the screen
+          anchorOffset: -20.0,
+          // Banner Position
+          anchorType: AnchorType.bottom,
+        );
+
       return new MaterialApp(
         home: new Scaffold(
           appBar: new AppBar(

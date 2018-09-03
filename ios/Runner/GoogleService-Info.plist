@@ -36,5 +36,7 @@
 	<string>1:637747621465:ios:a6ec4ee6a49413af</string>
 	<key>DATABASE_URL</key>
 	<string>https://ventrips-214422.firebaseio.com</string>
+	<key>ADMOB_APP_ID</key>
+	<string>ca-app-pub-4642980268605791~9598994286</string>
 </dict>
 </plist>
