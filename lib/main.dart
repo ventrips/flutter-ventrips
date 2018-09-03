@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import './views/video_cell.dart';
 
 void main() => runApp(new VentripsApp());
@@ -45,6 +47,21 @@ class VentripsState extends State<VentripsApp> {
     refreshList();
   }
 
+  Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
+    return ListTile(
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              document['title'],
+              style: Theme.of(context).textTheme.headline
+            )
+          )
+        ]
+      )
+    );
+  }
+
   @override
     Widget build (BuildContext context) {
       return new MaterialApp(
@@ -58,30 +75,42 @@ class VentripsState extends State<VentripsApp> {
               )
             ]
           ),
-          body: RefreshIndicator(
-            key: refreshKey,
-            child: (refreshKey.currentState == null ?
-              new Center(child: new CircularProgressIndicator()) :
-              ListView.builder(
-                itemCount: this.videos?.length,
-                itemBuilder: (context, i) {
-                  final video = this.videos[i];
-                  return new FlatButton(
-                    child: new VideoCell(video),
-                    onPressed: () {
-                      print("Video cell tappe: $i");
-                      Navigator.push(context,
-                        new MaterialPageRoute(
-                          builder: (context) => new DetailPage()
-                       )
-                      );
-                    }
-                 );
-               }
-              )
-            ),
-            onRefresh: refreshList
+          body: StreamBuilder(
+            stream: Firestore.instance.collection('items').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Text('Loading...');
+              return ListView.builder(
+                itemExtent: 80.0,
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) =>
+                  _buildListItem(context, snapshot.data.documents[index])
+              );
+            }
           )
+          // body: RefreshIndicator(
+          //   key: refreshKey,
+          //   child: (refreshKey.currentState == null ?
+          //     new Center(child: new CircularProgressIndicator()) :
+          //     ListView.builder(
+          //       itemCount: this.videos?.length,
+          //       itemBuilder: (context, i) {
+          //         final video = this.videos[i];
+          //         return new FlatButton(
+          //           child: new VideoCell(video),
+          //           onPressed: () {
+          //             print("Video cell tappe: $i");
+          //             Navigator.push(context,
+          //               new MaterialPageRoute(
+          //                 builder: (context) => new DetailPage()
+          //              )
+          //             );
+          //           }
+          //        );
+          //      }
+          //     )
+          //   ),
+          //   onRefresh: refreshList
+          // )
         )
       );
     }
