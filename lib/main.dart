@@ -57,7 +57,6 @@ class VentripsState extends State<VentripsApp> {
  
   var refreshKey = GlobalKey<RefreshIndicatorState>();
   List videos = [];
-  var product;
 
   @override
   void initState() {
@@ -95,8 +94,7 @@ class VentripsState extends State<VentripsApp> {
     print("Scan Bar Code");
   }
 
-  _launchURL() async {
-    var url = this.product['url'];
+  _launchURL(String url) async {
     if (await canLaunch(url)) {
       await launch(url);
     } else {
@@ -105,18 +103,17 @@ class VentripsState extends State<VentripsApp> {
   }
 
   Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
-    this.product = document;
+
     return ListTile(
       title: Row(
         children: [
-          new Image.network(this.product["imageUrl"], fit: BoxFit.contain),
+          new Image.network(document["imageUrl"], fit: BoxFit.contain),
           new Expanded(
-            child: Text(this.product['name'])
+            child: Text(document['name'])
           )
         ]
       ),
-      onTap: _launchURL,
-      
+      onTap: () => _launchURL(document['url']),      
     );
   }
 
@@ -153,7 +150,7 @@ class VentripsState extends State<VentripsApp> {
       return new MaterialApp(
         home: new Scaffold(
           appBar: new AppBar(
-            title: new Text("VENTRIPS"),
+            title: new Text("Recommended"),
             actions: <Widget>[
               new IconButton(
                 icon: new Icon(Icons.camera_alt),
