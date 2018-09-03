@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -25,7 +26,7 @@ BannerAd myBanner = new BannerAd(
   // Replace the testAdUnitId with an ad unit id from the AdMob dash.
   // https://developers.google.com/admob/android/test-ads
   // https://developers.google.com/admob/ios/test-ads
-  adUnitId: AD_UNIT_ID,
+  adUnitId: BannerAd.testAdUnitId,
   size: AdSize.banner,
   targetingInfo: targetingInfo,
   listener: (MobileAdEvent event) {
@@ -56,6 +57,7 @@ class VentripsState extends State<VentripsApp> {
  
   var refreshKey = GlobalKey<RefreshIndicatorState>();
   List videos = [];
+  var product;
 
   @override
   void initState() {
@@ -93,20 +95,48 @@ class VentripsState extends State<VentripsApp> {
     print("Scan Bar Code");
   }
 
+  _launchURL() async {
+    var url = this.product['url'];
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
+    this.product = document;
     return ListTile(
       title: Row(
         children: [
-          Expanded(
-            child: Text(
-              document['title'],
-              style: Theme.of(context).textTheme.headline
-            )
+          new Image.network(this.product["imageUrl"], fit: BoxFit.contain),
+          new Expanded(
+            child: Text(this.product['name'])
           )
         ]
-      )
+      ),
+      onTap: _launchURL,
+      
     );
   }
+
+      // children: <Widget>[
+      //   new Expand(
+      //     padding: new EdgeInsets.all(16.0),
+      //     child: new Column(
+      //       crossAxisAlignment: CrossAxisAlignment.start,
+      //       children: <Widget>[
+      //         new Image.network(document["imageUrl"], fit: BoxFit.contain),
+      //         new Container(height: 8.0),
+      //         new Text(
+      //           document["name"],
+      //           style: new TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)
+      //         ),
+      //         new Divider()
+      //       ]
+      //     )
+      //   )
+      // ]
 
   @override
     Widget build (BuildContext context) {
@@ -115,7 +145,7 @@ class VentripsState extends State<VentripsApp> {
         ..load()
         ..show(
           // Positions the banner ad 0 pixels from the bottom of the screen
-          anchorOffset: -20.0,
+          anchorOffset: 0.0,
           // Banner Position
           anchorType: AnchorType.bottom,
         );
@@ -132,7 +162,7 @@ class VentripsState extends State<VentripsApp> {
             ]
           ),
           body: StreamBuilder(
-            stream: Firestore.instance.collection('items').snapshots(),
+            stream: Firestore.instance.collection('products').snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) return const Text('Loading...');
               return ListView.builder(
