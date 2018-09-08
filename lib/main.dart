@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 
-import './views/video_cell.dart';
+import 'package:ventrips/mocks/data.dart';
+import 'package:ventrips/views/detail.dart';
+import 'package:ventrips/views/home.dart';
 
 const String APP_ID = 'ca-app-pub-4642980268605791~9598994286';
 const String AD_UNIT_ID = 'ca-app-pub-4642980268605791/8164339717';
@@ -45,18 +46,15 @@ InterstitialAd myInterstitial = new InterstitialAd(
   },
 );
 
-void main() => runApp(new VentripsApp());
+void main() => runApp(new MyApp());
 
-class VentripsApp extends StatefulWidget {
+class MyApp extends StatefulWidget {
   @override
-    State<StatefulWidget> createState() {
-      return new VentripsState();
-    }
+  State<StatefulWidget> createState() {
+    return new MyAppState();
+  }
 }
-class VentripsState extends State<VentripsApp> {
- 
-  var refreshKey = GlobalKey<RefreshIndicatorState>();
-  List videos = [];
+class MyAppState extends State<MyApp> {
 
   @override
   void initState() {
@@ -72,143 +70,39 @@ class VentripsState extends State<VentripsApp> {
   }
 
   @override
-  Future refreshList() async {
-    var url = 'https://api.letsbuildthatapp.com/youtube/home_feed';
-    http.Response response = await http.get(
-      Uri.encodeFull(url),
-      headers: {
-        "Accept": "application/json"
-        // ,"key": "value"
-      }
-    );
+  Widget build(BuildContext context) {
+    myBanner
+      // typically this happens well before the ad is shown
+      ..load()
+      ..show(
+        // Positions the banner ad 0 pixels from the bottom of the screen
+        anchorOffset: 0.0,
+        // Banner Position
+        anchorType: AnchorType.bottom,
+      );
 
-    // Turn off loading indicator
-    setState(() {
-      this.videos = json.decode(response.body)["videos"];
-    });
-
-    return null;
-  }
-
-  scanBarCode() {
-    print("Scan Bar Code");
-  }
-
-  _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
-  }
-
-  Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
-
-    return ListTile(
-      title: Row(
-        children: [
-          new Image.network(document["imageUrl"], fit: BoxFit.contain),
-          new Expanded(
-            child: Text(document['name'])
-          )
-        ]
+    return new MaterialApp(
+      title: 'Book App',
+      debugShowCheckedModeBanner: false,
+      theme: new ThemeData(
+        primarySwatch: Colors.yellow,
+        platform: TargetPlatform.iOS,
       ),
-      onTap: () => _launchURL(document['url']),      
+      home: Home(),
+      onGenerateRoute: (settings) => generateRoute(settings),
     );
   }
 
-      // children: <Widget>[
-      //   new Expand(
-      //     padding: new EdgeInsets.all(16.0),
-      //     child: new Column(
-      //       crossAxisAlignment: CrossAxisAlignment.start,
-      //       children: <Widget>[
-      //         new Image.network(document["imageUrl"], fit: BoxFit.contain),
-      //         new Container(height: 8.0),
-      //         new Text(
-      //           document["name"],
-      //           style: new TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)
-      //         ),
-      //         new Divider()
-      //       ]
-      //     )
-      //   )
-      // ]
+  ///Generate parameterized route --> e.g: detail/some book title
+  generateRoute(RouteSettings settings) {
+    final path = settings.name.split('/');
+    final title = path[1];
 
-  @override
-    Widget build (BuildContext context) {
-      myBanner
-        // typically this happens well before the ad is shown
-        ..load()
-        ..show(
-          // Positions the banner ad 0 pixels from the bottom of the screen
-          anchorOffset: 0.0,
-          // Banner Position
-          anchorType: AnchorType.bottom,
-        );
+    Book book = books.firstWhere((it) => it.title == title);
+    return MaterialPageRoute(
+      settings: settings,
+      builder: (context) => Detail(book),
+    );
+  }
 
-      return new MaterialApp(
-        home: new Scaffold(
-          appBar: new AppBar(
-            title: new Text("Recommended"),
-            actions: <Widget>[
-              new IconButton(
-                icon: new Icon(Icons.camera_alt),
-                onPressed: scanBarCode
-              )
-            ]
-          ),
-          body: StreamBuilder(
-            stream: Firestore.instance.collection('products').snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const Text('Loading...');
-              return ListView.builder(
-                itemExtent: 80.0,
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) =>
-                  _buildListItem(context, snapshot.data.documents[index])
-              );
-            }
-          )
-          // body: RefreshIndicator(
-          //   key: refreshKey,
-          //   child: (refreshKey.currentState == null ?
-          //     new Center(child: new CircularProgressIndicator()) :
-          //     ListView.builder(
-          //       itemCount: this.videos?.length,
-          //       itemBuilder: (context, i) {
-          //         final video = this.videos[i];
-          //         return new FlatButton(
-          //           child: new VideoCell(video),
-          //           onPressed: () {
-          //             print("Video cell tappe: $i");
-          //             Navigator.push(context,
-          //               new MaterialPageRoute(
-          //                 builder: (context) => new DetailPage()
-          //              )
-          //             );
-          //           }
-          //        );
-          //      }
-          //     )
-          //   ),
-          //   onRefresh: refreshList
-          // )
-        )
-      );
-    }
-}
-
-class DetailPage extends StatelessWidget {
-  @override
-    Widget build(BuildContext context) {
-      return new Scaffold(
-        appBar: new AppBar(
-          title: new Text("Detail Page")
-        ),
-        body: new Center(
-          child: new Text("Detail Body")
-        )
-      );
-    }
 }
