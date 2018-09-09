@@ -1,11 +1,12 @@
 import 'package:ventrips/mocks/data.dart';
 import 'package:ventrips/shared/rating_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Detail extends StatelessWidget {
-  final Book book;
+  final DocumentSnapshot product;
 
-  Detail(this.book);
+  Detail(this.product);
 
   @override
   Widget build(BuildContext context) {
@@ -21,35 +22,32 @@ class Detail extends StatelessWidget {
       ],
     );
 
-    ///detail of book image and it's pages
+    // ///detail of product image and it's pages
     final topLeft = Column(
       children: <Widget>[
         Padding(
           padding: EdgeInsets.all(16.0),
           child: Hero(
-            tag: book.title,
+            tag: text(product['name']),
             child: Material(
               elevation: 15.0,
               shadowColor: Colors.yellow.shade900,
-              child: Image(
-                image: AssetImage(book.image),
-                fit: BoxFit.cover,
-              ),
+              child: new Image.network(product['imageUrl'], fit: BoxFit.contain),
             ),
           ),
         ),
-        text('${book.pages} pages', color: Colors.black38, size: 12)
+        text('${product['price']} pages', color: Colors.black38, size: 12)
       ],
     );
 
-    ///detail top right
+    // detail top right
     final topRight = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        text(book.title,
+        text(product['name'],
             size: 16, isBold: true, padding: EdgeInsets.only(top: 16.0)),
         text(
-          'by ${book.writer}',
+          'by ${product['name']}',
           color: Colors.black54,
           size: 12,
           padding: EdgeInsets.only(top: 8.0, bottom: 16.0),
@@ -57,11 +55,11 @@ class Detail extends StatelessWidget {
         Row(
           children: <Widget>[
             text(
-              book.price,
+              product['name'],
               isBold: true,
               padding: EdgeInsets.only(right: 8.0),
             ),
-            RatingBar(rating: book.rating)
+            // RatingBar(rating: product['rating'])
           ],
         ),
         SizedBox(height: 32.0),
@@ -93,11 +91,11 @@ class Detail extends StatelessWidget {
 
     ///scrolling text description
     final bottomContent = Container(
-      height: 220.0,
+      height: 400.0,
       child: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Text(
-          book.description,
+          product['name'],
           style: TextStyle(fontSize: 13.0, height: 1.5),
         ),
       ),
@@ -106,7 +104,7 @@ class Detail extends StatelessWidget {
     return Scaffold(
       appBar: appBar,
       body: Column(
-        children: <Widget>[topContent, bottomContent],
+        children: [topContent, bottomContent],
       ),
     );
   }

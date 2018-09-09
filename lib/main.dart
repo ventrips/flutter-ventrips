@@ -88,20 +88,7 @@ class MyAppState extends State<MyApp> {
         primarySwatch: Colors.yellow,
         platform: TargetPlatform.iOS,
       ),
-      home: Home(),
-      onGenerateRoute: (settings) => generateRoute(settings),
-    );
-  }
-
-  ///Generate parameterized route --> e.g: detail/some book title
-  generateRoute(RouteSettings settings) {
-    final path = settings.name.split('/');
-    final title = path[1];
-
-    Book book = books.firstWhere((it) => it.title == title);
-    return MaterialPageRoute(
-      settings: settings,
-      builder: (context) => Detail(book),
+      home: Home()
     );
   }
 
